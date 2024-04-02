@@ -40,7 +40,7 @@ fn start_client() {
         Ok(mut stream) => {
             println!("Successfully connected to server in port 8080");
 
-            loop {
+          //  loop {
                 // Send "hello" to the server.
                 println!("Sending hello message to server");
 
@@ -55,6 +55,18 @@ fn start_client() {
                     Ok(_) => {
                         if buffer[0] == 1 {
                             println!("Received welcome message from server");
+                            println!("Number of stations: {}", buffer[2]);
+                            let stdin = io::stdin();
+                   
+                            let line = stdin.lock().lines().next().unwrap().unwrap();
+                            let station: i8 = line.parse().expect("Failed to parse station number");
+                            let station: u8 = station as u8;
+                            if station > buffer[2] {
+                                println!("Invalid station number");
+                                return;
+                            }
+                            stream.write(&[1, 0, station]).expect("Failed to write to stream");
+                           
                         }
                         else{
                             println!("Received invalid message from server");
@@ -65,7 +77,7 @@ fn start_client() {
                         return;
                     }
                 }
-            }
+          //  }
         },
         Err(e) => {
             println!("Failed to connect: {}", e);
