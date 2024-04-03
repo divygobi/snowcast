@@ -13,6 +13,8 @@ use std::io::{BufRead};
 
 
 
+//By trying to bind port 0 to a tcp/udp connection, the OS will assign a random port to the connection,
+// this cilent binary should open the listener on the port assigned by the OS
 fn main() {
 
     // Start server
@@ -34,6 +36,7 @@ fn main() {
     }
 }
 
+//We need to have different clients being supported so they need to listen on different ports I think
 fn start_client() {
     // Start client
     match TcpStream::connect("localhost:8080") {
