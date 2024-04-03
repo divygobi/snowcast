@@ -39,7 +39,7 @@ fn main(){
 
     //Create a hashmap to store the clients, this needs to be 
     let mut station_map: HashMap<u16,Vec<Arc<Mutex<Client>>>> = HashMap::new();
-    let (tx, rx): (Sender<i32>, Receiver<i32>) = mpsc::channel();
+    let (tx, rx): (Sender<Client>, Receiver<Client>) = mpsc::channel();
     
 
 
@@ -57,9 +57,9 @@ fn main(){
         
         println!("Server listening on port: {}", TCP_PORT);
         match listener.accept(){
-            Ok((stream, _)) => {
+            Ok((&stream, _)) => {
                 //create a buffer to store the incoming data
-                handle_client(stream, &mut station_map)
+                handle_client(stream, tx.clone())
                 }
             
             Err(e) => {
@@ -71,55 +71,43 @@ fn main(){
     //BROADCAST TO CURRENT CURRENT CONNECTIONS.
     loop{
         //for each station, broadcast the data to the clients
-
-        for station in station_map.keys(){
-            //this will be given as {station: Vec<Clients>}
-            let clients = station_map.get(station);
-            match clients{
-                Some(clients) => {
-                    for client in clients{
-                        //Send data to clients(Open a UDP connection to send data to clients)
-                        if client.lock().unwrap().currently_broadcasting{
-                            continue;
-                        }
-                        client.lock().unwrap().currently_broadcasting = true;
-                        thread::spawn(move || send_data_to_client(&(client.lock().unwrap().clone())));
-                    }
-                }
-                None => {
-                   // println!("No clients subscribed to station {}", station);
-                }
+        match rx.recv(){
+            Ok(client) => {
+                thread::spawn(move || {
+                    let client = client.clone();
+                    let station_number = client.station_number;
+                    let announcement = "New song is playing";
+                    send_announcement_to_client(client, announcement);
+                    //send_data_to_client(&client);
+                });
+            }
+            Err(e) => {
+                println!("Error: {}", e);
             }
         }
+        
+    
     }
     
 }
 
-fn handle_client(stream: TcpStream, station_map: & mut HashMap<u16,Vec<Arc<Mutex<Client>>>>){
+fn handle_client(&stream: TcpStream, tx: Sender<Client> ){
     //create a buffer to store the incoming data
     let mut client: Client = Client::new(stream);
     loop {
         let mut buffer = [0; 3];
-        client.tcp_stream.read(&mut buffer).expect("Failed to read from stream");
+        stream.read(&mut buffer).expect("Failed to read from stream");
         //If there this is a hello message 
         if buffer[0] == 0{
             println!("Received hello message from client, sending welcome message");
             client.udp_port = buffer[2] as u16;
             client.tcp_stream.write(&[1, 0, 4]).expect("Failed to write to stream");
         }
-
         //Else if its a set station message
         else if buffer[0] == 1{
             println!("Received request for station {}", buffer[2]);
             client.station_number = buffer[2] as u16;
-            if station_map.contains_key(&client.station_number) {
-                let clients = station_map.get(&client.station_number).unwrap();
-                clients.push(Arc::new(Mutex::new(client.clone())));
-            }
-            else{
-                station_map.insert(client.station_number, vec![Arc::new(Mutex::new(client.clone()))]);
-            }
-            break;
+            tx.send(client).unwrap();
         }
         else {
             println!("Received invalid message from client");
