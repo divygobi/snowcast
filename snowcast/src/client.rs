@@ -29,7 +29,9 @@ fn main() {
         let line = line.unwrap();
         if line == "start" {
             println!("Starting new client");
-            start_client();
+         //   thread::spawn(|| 
+                start_client()
+           // );
         } else {
             println!("Unknown command: {}", line);
         }
@@ -59,16 +61,25 @@ fn start_client() {
                         if buffer[0] == 1 {
                             println!("Received welcome message from server");
                             println!("Number of stations: {}", buffer[2]);
-                            let stdin = io::stdin();
-                   
-                            let line = stdin.lock().lines().next().unwrap().unwrap();
-                            let station: i8 = line.parse().expect("Failed to parse station number");
-                            let station: u8 = station as u8;
-                            if station > buffer[2] {
-                                println!("Invalid station number");
-                                return;
-                            }
+                            
+                            println!("Enter the station number you want to listen to:");
+                           // let stdin = io::stdin();
+                            let station: u8 = 2;
+
+                            // for line in stdin.lock().lines() {
+                            //     let line = line.unwrap();
+                                
+                            //     let station_read: i8 = line.parse().expect("Failed to parse station number");
+                            //     station = station_read as u8;
+                            //     if station > buffer[2] {
+                            //         println!("Invalid station number");
+                            //         return;
+                            //     }
+                            println!("Requesting station {}", station);
                             stream.write(&[1, 0, station]).expect("Failed to write to stream");
+                                //just read one line lul
+                                
+                           // }
                            
                         }
                         else{
