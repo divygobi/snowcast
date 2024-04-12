@@ -5,11 +5,13 @@ use std::net::TcpStream;
 use std::net::TcpListener;
 use std::net::UdpSocket;
 use std::io::{self, Write};
+use std::os::unix::process::CommandExt;
 use std::thread;
 use std::time::Duration;
 use std::vec;
 use std::mem;
-use std::io::{BufRead};
+use std::io::BufRead;
+use std::process::Command;
 
 
 
@@ -17,14 +19,15 @@ use std::io::{BufRead};
 // this cilent binary should open the listener on the port assigned by the OS
 fn main() {
 
-    // Start server
-
+    // Start lis
+    let mut start_data_listener = Command::new("sh");
+//
     // Start stdin loop
     let mut count = 0;
     let stdin = io::stdin();
     println!("Hello goon, type start to start a new client!");
 
-
+    //need a dedicated thread for std in[ut, ]
     for line in stdin.lock().lines() {
         let line = line.unwrap();
         if line == "start" {
@@ -170,12 +173,3 @@ struct Announce {
     reply_type: u8,
     songname_size: u8,
     // songname: [char; n] // This is not valid Rust. See explanation below.
-}
-
-#[repr(C)]
-struct InvalidCommand {
-    reply_type: u8,
-    string_size: u8,
-    // reply_string: [char; n] // This is not valid Rust. See explanation below.
-}
-

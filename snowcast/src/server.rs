@@ -1,4 +1,4 @@
-use std::{ io::{Read, Write}, net::{TcpListener, TcpStream}, thread};
+use std::{ io::{Read, Write}, net::{TcpListener, TcpStream}, thread, time::Duration};
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
 pub struct Client{
@@ -70,10 +70,10 @@ fn main(){
     }});
 
     //BROADCAST TO CURRENT CURRENT CONNECTIONS.
-    loop{
+    //thread::spawn(move || loop{
         //for each station, broadcast the data to the clients
         println!("Waiting for new client to broadcast to");
-        match rx.recv(){
+        loop {match rx.recv(){
             Ok(client) => {
                 let announcement = "New song is playing";
                 send_announcement_to_client(&client.tcp_stream, announcement);
@@ -87,8 +87,8 @@ fn main(){
             Err(e) => {
                 println!("Error: {}", e);
             }
-        }
-    }
+        }}
+    //});
     
 }
 
@@ -113,6 +113,7 @@ fn handle_client(stream: &TcpStream, tx: Sender<Client> ){
             let mut client: Client = Client::new(stream.try_clone().unwrap());
             client.udp_port = udp_port; 
             client.station_number = buffer[2] as u16;
+            println!("Sending client through the clone sender");
             tx.send(client).expect("Failed to send client to broadcast");
             return;
         }
@@ -161,7 +162,10 @@ fn send_data_to_client(client: &Client){
     //IF NEW SONG, SEND ANNOUNCEMENT TO CLIENT CONTROL(TCP)
 
     //TRASIMIT contiously DATA TO CLIENT LISTENER(UDP) 
-    print!("Sending data to client on station number {}, on udp port {}", client.station_number, client.udp_port);
+    loop{
+        println!("Sending data to client on station number {}, on udp port {}", client.station_number, client.udp_port);
+        thread::sleep(Duration::from_secs(1));
+    }
   //  send_announcement_to_client(client, "announcement");
     
 }

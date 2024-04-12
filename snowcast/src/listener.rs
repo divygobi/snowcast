@@ -7,8 +7,10 @@ fn main() {
     let socket = UdpSocket::bind("0.0.0.0:0").expect("Failed to bind socket");
 
     let port = socket.local_addr().unwrap().port();
+    print!("{}", port);
 
-    print!("Listening on port {}", port);
+   // println!("Yo meow im the data listener");
+   // println!("Listening on port {}", port);
 
 
     loop {
@@ -19,8 +21,4 @@ fn main() {
                 println!("Received message: {}", message);
             }
             Err(e) => {
-                eprintln!("Failed to receive message: {}", e);
-            }
-        }
-    }
-}
+                epr
